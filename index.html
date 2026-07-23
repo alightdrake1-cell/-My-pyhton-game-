@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; color: white; font-family: sans-serif; }
+        canvas { border: 2px solid #fff; }
+    </style>
+</head>
+<body>
+    <div id="game"></div>
+    <script>
+        // Simple HTML/JS Web Game Launcher
+        var config = {
+            type: Phaser.AUTO,
+            width: 400,
+            height: 600,
+            physics: { default: 'arcade', arcade: { gravity: { y: 300 } } },
+            scene: { preload: preload, create: create, update: update }
+        };
+        var game = new Phaser.Game(config);
+        var player, coins, score = 0, scoreText, cursors;
+
+        function preload () {
+            this.load.image('sky', 'https://labs.phaser.io/assets/skies/space3.png');
+        }
+
+        function create () {
+            this.add.image(200, 300, 'sky');
+            player = this.add.rectangle(200, 550, 80, 20, 0x1E90FF);
+            this.physics.add.existing(player);
+            player.body.setCollideWorldBounds(true);
+            player.body.setImmovable(true);
+
+            coins = this.physics.add.group();
+            spawnCoin(this);
+
+            scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '24px', fill: '#fff' });
+            cursors = this.input.keyboard.createCursorKeys();
+
+            this.input.on('pointerdown', function (pointer) {
+                if (pointer.x < 200) player.body.setVelocityX(-300);
+                else player.body.setVelocityX(300);
+            });
+            this.input.on('pointerup', function () { player.body.setVelocityX(0); });
+        }
+
+        function update () {
+            if (cursors.left.isDown) player.body.setVelocityX(-300);
+            else if (cursors.right.isDown) player.body.setVelocityX(300);
+        }
+
+        function spawnCoin(scene) {
+            var x = Phaser.Math.Between(20, 380);
+            var coin = scene.add.circle(x, 0, 12, 0xFFD700);
+            scene.physics.add.existing(coin);
+            coins.add(coin);
+            .body.setVelocityY(200);
+
+            scene.physics.add.overlap(player, coin, function () {
+                coin.destroy();
+                score += 1;
+                scoreText.setText('Score: ' + score);
+                spawnCoin(scene);
+            });
+        }
+    </script>
+</body>
+</html>
